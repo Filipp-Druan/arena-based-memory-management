@@ -15,8 +15,8 @@ Arena* arena_malloc_init(size_t size) {
     Arena*   arena  = (Arena *) malloc(sizeof(Arena));
     uint8_t* buffer = malloc(size);
 
-    if (!arena) return NULL;
-    if (!buffer) return NULL;
+    if (arena == NULL) return NULL;
+    if (buffer == NULL) return NULL;
 
     arena->buffer      = buffer;
     arena->buffer_size = size;
@@ -50,7 +50,7 @@ void arena_malloc_deinit(Arena* arena) {
 
 int main() {
     Arena* arena = arena_malloc_init(1024);
-    if (arena == 0) return 1;
+    if (arena == NULL) return 1;
     char *string_buffer = (char *) arena_alloc(arena, 256);
 
     string_buffer[0] = 'H';
