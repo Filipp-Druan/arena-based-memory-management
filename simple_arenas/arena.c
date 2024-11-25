@@ -3,24 +3,28 @@
 #include <stdlib.h>
 
 typedef struct {
-    uint8_t* buffer;
+    void* buffer;
     size_t buffer_size;
     size_t offset;
 } Arena;
+
+// Создаёт арену, получив блок и его размер. Возвращает саму арену, а не указатель на неё.
+Arena arena_manual_init(void* buffer, size_t size) {
+    Arena arena = {buffer, size, 0};
+    return arena;
+}
 
 // Создаёт арену при помощи malloc. Принимает размер необходимой области.
 // Возвращает адрес указатель на структуру арена.
 // Если память выделить не удалось, возвращает NULL.
 Arena* arena_malloc_init(size_t size) {
-    Arena*   arena  = (Arena *) malloc(sizeof(Arena));
-    uint8_t* buffer = malloc(size);
+    Arena* arena  = (Arena *) malloc(sizeof(Arena));
+    void*  buffer = malloc(size);
 
-    if (arena == NULL) return NULL;
+    if (arena  == NULL) return NULL;
     if (buffer == NULL) return NULL;
 
-    arena->buffer      = buffer;
-    arena->buffer_size = size;
-    arena->offset      = 0;
+    *arena = arena_manual_init(buffer, size);
 
     return arena;
 }
@@ -39,6 +43,7 @@ void* arena_alloc(Arena* arena, size_t size) {
     return address;
 }
 
+// Освобождает всю арену целиком
 void arena_free_all(Arena* arena) {
     arena->offset = 0;
 }
@@ -57,5 +62,7 @@ int main() {
     string_buffer[1] = 'i';
 
     printf("Hello!\nIn string_buffer we hawe:\n%s", string_buffer);
+
+    arena_malloc_deinit(arena);
     return 0;
 }
