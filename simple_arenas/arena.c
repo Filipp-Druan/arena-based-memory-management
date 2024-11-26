@@ -26,11 +26,14 @@ Arena* arena_heap_init(size_t buffer_size) {
     if (memory == NULL) return NULL;
 
     void* buffer = memory + struct_size;
+    // Буффер начинается сразу после структуры
     Arena* arena = (Arena *)memory;
+    // Располагаем в начале памяти структуру арены
 
     *arena = arena_manual_init(buffer, buffer_size);
     return arena;
 }
+
 void arena_heap_deinit(Arena* arena_pointer) {
     free(arena_pointer);
 }
@@ -50,14 +53,15 @@ void* arena_alloc(Arena* arena, size_t size) {
     return address;
 }
 
-// Освобождает всю арену целиком
+// Освобождает всю арену целиком, но не удаляет её.
 void arena_free_all(Arena* arena) {
     arena->offset = 0;
 }
 
 int test_arena_heap_init_deinit() {
+    srand(1);
     for (size_t i = 50000000; i != 0; i--) {
-        Arena* arena = arena_heap_init(6553600);
+        Arena* arena = arena_heap_init(rand() / 1000 + 2048);
         if (arena == NULL) printf("Не удалось выделеть память.");
 
         arena_heap_deinit(arena);
@@ -65,6 +69,7 @@ int test_arena_heap_init_deinit() {
     }
     return 0;
 }
+
 
 int main() {
     test_arena_heap_init_deinit();
