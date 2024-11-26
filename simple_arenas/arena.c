@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct {
     void* buffer;
@@ -42,11 +43,16 @@ void arena_heap_deinit(Arena* arena_pointer) {
     // этой области.
 }
 
+// Вычисляет, сколько свободного места осталось в буффере арены.
+size_t arena_free_memory_size(Arena* arena) {
+    return (arena->buffer_size) - (arena->offset);
+}
+
 // Функция принимает арену и размер памяти, которую на ней нужно выделить.
 // Проверяет, что память может быть выделена. Если нет, возвращает NULL.
 // Если да, возвращает указатель на начало выделенной памяти.
 void* arena_alloc(Arena* arena, size_t size) {
-    size_t free_memory_size = (arena->buffer_size) - (arena->offset);
+    size_t free_memory_size = arena_free_memory_size(arena);
     // Может быть, из-за вычисления этого размера мы храним смещения, а не адреса?
 
     if (free_memory_size < size) return NULL;
@@ -56,6 +62,27 @@ void* arena_alloc(Arena* arena, size_t size) {
     arena->offset += size;
 
     return address;
+}
+
+// Увеличивает размер области, выделенной на арени под последний объект.
+// Если увеличить область не удалось, возвращает NULL.
+void* arena_realloc_last(Arena* arena, size_t size) {
+    if (arena_free_memory_size(arena) < size) return NULL;
+
+    size_t new_offset = arena->last_allocation_offset + size;
+
+    size_t size_delta = new_offset - arena->offset;
+    // Находим, насколько изменился размер
+
+    void* new_area = arena->buffer + arena->offset;
+    // Находим адрес области, которая раньше не принадлежала
+    // последнему выделенному объекту, а теперь принадлежит.
+    memset(new_area, 0, size_delta);
+    // Заполняем новую выделенную область нулями.
+
+    arena->offset = new_offset;
+
+    return arena->buffer + arena->last_allocation_offset;
 }
 
 // Освобождает всю арену целиком, но не удаляет её.
