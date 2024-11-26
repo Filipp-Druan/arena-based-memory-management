@@ -6,11 +6,12 @@ typedef struct {
     void* buffer;
     size_t buffer_size;
     size_t offset;
+    size_t last_allocation_offset;
 } Arena;
 
 // Создаёт арену, получив блок и его размер. Возвращает саму арену, а не указатель на неё.
-Arena arena_manual_init(void* buffer, size_t size) {
-    Arena arena = {buffer, size, 0};
+Arena arena_manual_init(void* buffer, size_t buffer_size) {
+    Arena arena = {buffer, buffer_size, 0, 0};
     return arena;
 }
 
@@ -35,7 +36,10 @@ Arena* arena_heap_init(size_t buffer_size) {
 }
 
 void arena_heap_deinit(Arena* arena_pointer) {
-    free(arena_pointer);
+    free(arena_pointer); // Так можно сделать потому,
+    // что мы выделяем область памяти и под структуру и под буффер
+    // одним вызовом malloc, и структура находится в самом начале
+    // этой области.
 }
 
 // Функция принимает арену и размер памяти, которую на ней нужно выделить.
@@ -48,6 +52,7 @@ void* arena_alloc(Arena* arena, size_t size) {
     if (free_memory_size < size) return NULL;
 
     void* address = (arena->buffer) + (arena->offset);
+    arena->last_allocation_offset = arena->offset;
     arena->offset += size;
 
     return address;
@@ -55,7 +60,8 @@ void* arena_alloc(Arena* arena, size_t size) {
 
 // Освобождает всю арену целиком, но не удаляет её.
 void arena_free_all(Arena* arena) {
-    arena->offset = 0;
+    arena->offset                 = 0;
+    arena->last_allocation_offset = 0; // Нужно ли обнулять это смещение? Или не нужно? Пока буду обнулять.
 }
 
 int test_arena_heap_init_deinit() {
